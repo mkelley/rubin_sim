@@ -47,7 +47,8 @@ def normalize_metric_summaries(
     # Use only those metrics present both in the
     # summary and metrics sets dataframe
     if metric_sets is None:
-        summary = summary.copy()    
+        summary = summary.copy()
+        used_metrics = summary.columns.values
     else:
         used_metrics = [
             s for s in summary.columns.values if s in metric_sets.metric.values
@@ -64,10 +65,8 @@ def normalize_metric_summaries(
     summary = summary.T.groupby("metric").first().T.groupby("run").first()
 
     if metric_sets is None:
-        norm_summary.loc[:, :] = 1 + (
-            summary.loc[:, :].sub(
-                summary.loc[baseline_run, :], axis="columns"
-            )
+        norm_summary = 1 + (
+            summary.loc[:, :].sub(summary.loc[baseline_run, :], axis="columns")
         ).div(summary.loc[baseline_run, :], axis="columns")
     else:
         metric_names = [
@@ -254,9 +253,10 @@ def plot_run_metric(
 
     plot_df.set_index("color", inplace=True)
     for idx in plot_df.index.unique():
+        good_points = np.isfinite(plot_df.loc[idx, "x"])
         ax.plot(
-            plot_df.loc[idx, "x"],
-            plot_df.loc[idx, "y"],
+            plot_df.loc[idx, "x"][good_points],
+            plot_df.loc[idx, "y"][good_points],
             label=str(idx).strip(),
         )
 
